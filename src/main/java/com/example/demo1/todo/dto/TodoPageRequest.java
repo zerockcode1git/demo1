@@ -7,15 +7,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 /**
- * @param page 0부터 시작하는 페이지 번호. 생략하면 0
+ * @param page 1부터 시작하는 페이지 번호. 생략하면 1
  * @param size 한 페이지의 항목 수. 생략하면 10
  */
 public record TodoPageRequest(
-        @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다.") Integer page,
+        @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.") Integer page,
         @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
         @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.") Integer size) {
 
-    private static final int DEFAULT_PAGE = 0;
+    private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_SIZE = 10;
 
     public TodoPageRequest {
@@ -24,6 +24,7 @@ public record TodoPageRequest(
     }
 
     public Pageable toPageable() {
-        return PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        // Spring Data는 페이지 번호가 0부터 시작하므로 1을 뺀다.
+        return PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "id"));
     }
 }

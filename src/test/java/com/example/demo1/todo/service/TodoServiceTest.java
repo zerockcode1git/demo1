@@ -64,7 +64,7 @@ class TodoServiceTest {
 
         TodoPageResponse response = todoService.getAll(new TodoPageRequest(null, null));
 
-        assertThat(response.page()).isZero();
+        assertThat(response.page()).isEqualTo(1);
         assertThat(response.size()).isEqualTo(10);
         assertThat(response.totalElements()).isGreaterThanOrEqualTo(11);
         assertThat(response.totalPages()).isGreaterThanOrEqualTo(2);
@@ -77,9 +77,9 @@ class TodoServiceTest {
     void getAllReturnsRequestedPageAndSize() {
         List<Long> newestFirst = createTodos(6).reversed();
 
-        TodoPageResponse response = todoService.getAll(new TodoPageRequest(1, 3));
+        TodoPageResponse response = todoService.getAll(new TodoPageRequest(2, 3));
 
-        assertThat(response.page()).isEqualTo(1);
+        assertThat(response.page()).isEqualTo(2);
         assertThat(response.size()).isEqualTo(3);
         assertThat(response.content()).extracting(TodoResponse::id)
                 .containsExactlyElementsOf(newestFirst.subList(3, 6));

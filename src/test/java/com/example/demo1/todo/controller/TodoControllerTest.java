@@ -69,13 +69,13 @@ class TodoControllerTest {
 
     @Test
     void getAllUsesDefaultsWhenParametersAreOmitted() throws Exception {
-        when(todoService.getAll(new TodoPageRequest(0, 10)))
-                .thenReturn(new TodoPageResponse(List.of(TODO), 0, 10, 1, 1, false));
+        when(todoService.getAll(new TodoPageRequest(1, 10)))
+                .thenReturn(new TodoPageResponse(List.of(TODO), 1, 10, 1, 1, false));
 
         mockMvc.perform(get("/api/todos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(1))
-                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.page").value(1))
                 .andExpect(jsonPath("$.size").value(10))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.totalPages").value(1))
@@ -158,9 +158,9 @@ class TodoControllerTest {
 
     @Test
     void invalidPageParametersReturn400() throws Exception {
-        mockMvc.perform(get("/api/todos").param("page", "-1"))
+        mockMvc.perform(get("/api/todos").param("page", "0"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.fieldErrors.page").value("페이지 번호는 0 이상이어야 합니다."));
+                .andExpect(jsonPath("$.fieldErrors.page").value("페이지 번호는 1 이상이어야 합니다."));
         mockMvc.perform(get("/api/todos").param("size", "0"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors.size").value("페이지 크기는 1 이상이어야 합니다."));
