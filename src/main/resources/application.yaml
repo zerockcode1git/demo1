@@ -1,4 +1,12 @@
 spring:
   application:
     name: demo1
-    
+  # 실행 시 프로필을 지정하지 않으면 local 프로필로 실행한다.
+  # DB, Supabase, 업로드 크기 등 설정은 application-local.yaml에 둔다.
+  profiles:
+    default: local
+  datasource:
+    hikari:
+      connection-init-sql: SET lock_timeout = '3s'
+  jpa:
+    open-in-view: false
