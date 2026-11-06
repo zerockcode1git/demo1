@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -42,8 +43,10 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * 웹 계층만 실행한다. 서비스는 가짜 객체라 DB와 Supabase에 접속하지 않는다.
  * 전체 범위의 FileStorageControllerAdvice도 함께 올라온다.
+ * 보안 필터(JWT 인증)는 끄고 컨트롤러 동작만 검증한다.
  */
 @WebMvcTest(ProductController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class ProductControllerTest {
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 6, 12, 0);

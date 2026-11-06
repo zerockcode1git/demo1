@@ -10,3 +10,4 @@ spring:
       connection-init-sql: SET lock_timeout = '3s'
   jpa:
     open-in-view: false
+

@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -32,8 +33,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * 웹 계층만 실행한다. TodoService는 가짜 객체라 DB에 접속하지 않는다.
+ * 보안 필터(JWT 인증)는 끄고 컨트롤러 동작만 검증한다.
  */
 @WebMvcTest(TodoController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class TodoControllerTest {
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 5, 12, 0);
