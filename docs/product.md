@@ -48,13 +48,17 @@ com.example.demo1
 
 기본 경로는 `/api/products`이다. Swagger UI(`/swagger-ui/index.html`)의 "상품" 그룹에서 확인할 수 있다.
 
-| 메서드 | 경로 | 설명 | 성공 응답 |
-|---|---|---|---|
-| POST | `/api/products` | 상품 등록 (multipart) | 201 `ProductResponse` |
-| GET | `/api/products/{id}` | 상품 조회 | 200 `ProductResponse` |
-| GET | `/api/products` | 상품 목록 조회, 검색 | 200 `ProductPageResponse` |
-| PUT | `/api/products/{id}` | 상품 수정 (multipart) | 200 `ProductResponse` |
-| DELETE | `/api/products/{id}` | 상품 삭제 (삭제 표시) | 204 |
+| 메서드 | 경로 | 설명 | 로그인 | 성공 응답 |
+|---|---|---|---|---|
+| POST | `/api/products` | 상품 등록 (multipart) | 필요 | 201 `ProductResponse` |
+| GET | `/api/products/{id}` | 상품 조회 | 불필요 | 200 `ProductResponse` |
+| GET | `/api/products` | 상품 목록 조회, 검색 | 불필요 | 200 `ProductPageResponse` |
+| PUT | `/api/products/{id}` | 상품 수정 (multipart) | 필요 | 200 `ProductResponse` |
+| DELETE | `/api/products/{id}` | 상품 삭제 (삭제 표시) | 필요 | 204 |
+
+- **로그인 필요:** `Authorization: Bearer {accessToken}` 헤더를 붙여야 한다. 없으면 401 `TOKEN_MISSING`이다.
+- **조회와 목록:** 화이트 리스트(`GET /api/products/**`)에 있어 토큰 없이 호출할 수 있다.
+- 자세한 내용은 [docs/auth.md](auth.md)를 본다.
 
 ### 등록과 수정 요청 형식
 
@@ -325,7 +329,7 @@ create index if not exists idx_product_name_trgm
 | `ProductRepositoryTest` | 저장, 이미지 교체, 조회 쿼리, 잠금 조회 | `@DataJpaTest`, 실제 DB, 롤백 |
 | `ProductServiceTest` | 등록, 조회, 목록, 수정, 삭제, 검색 | `@DataJpaTest`, 실제 DB, 롤백 |
 | `ProductCommandServiceTest` | 이미지 검사, 업로드, 실패 시 파일 정리 | Mockito 단위 테스트, DB와 Supabase 접속 없음 |
-| `ProductControllerTest` | 요청 형식, 검증, 오류 응답 | `@WebMvcTest`, 서비스는 가짜 객체 |
+| `ProductControllerTest` | 요청 형식, 검증, 오류 응답 | `@WebMvcTest`, 서비스는 가짜 객체, 보안 필터 끔(`addFilters = false`) |
 
 - **실제 DB 사용:** `@DataJpaTest` 테스트는 `application-local.yaml`의 실제 Supabase DB에 접속한다. 각 테스트는 끝나면 롤백된다.
 - **검색 테스트:** 실제 DB에 다른 상품이 있어도 결과가 섞이지 않도록 상품명에 고유 문자열을 붙인다.
