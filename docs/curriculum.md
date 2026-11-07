@@ -1,4 +1,4 @@
-# Spring Boot 입문 6일 커리큘럼
+# Spring Boot 입문 7일 커리큘럼
 
 이 저장소(demo1)를 만든 과정을 따라가며 Spring Boot로 REST API 서버를 만드는 과정이다.
 
@@ -7,14 +7,14 @@
 | 항목 | 내용 |
 |---|---|
 | 대상 | 대학교 1학년. Spring은 처음이고, Java 문법(클래스, 인터페이스, 컬렉션)과 SQL 기초(SELECT, INSERT, JOIN)는 알고 있다. |
-| 기간 | 6일, 하루 7시간 (오전 3시간 + 오후 4시간) |
-| 완성 결과물 | 할 일(Todo) API, 이미지 업로드가 되는 상품 API, JWT 로그인과 권한 처리, 테스트, API 문서(Swagger) |
-| 기술 스택 | Java 21, Spring Boot 4, Gradle, Spring Data JPA, PostgreSQL(Supabase), Supabase Storage, springdoc(Swagger), Spring Security, JWT(jjwt), JUnit 5, Mockito |
+| 기간 | 7일, 하루 7시간 (오전 3시간 + 오후 4시간) |
+| 완성 결과물 | 할 일(Todo) API, 이미지 업로드가 되는 상품 API, JWT 로그인과 권한 처리, Redis를 쓰는 토큰 갱신, 테스트, API 문서(Swagger) |
+| 기술 스택 | Java 21, Spring Boot 4, Gradle, Spring Data JPA, PostgreSQL(Supabase), Supabase Storage, springdoc(Swagger), Spring Security, JWT(jjwt), Redis(Redis Cloud, Spring Data Redis), JUnit 5, Mockito |
 
 ### 진행 원칙
 
 - **한 단계씩 만들고 확인한다.** 엔티티 → 리포지토리 → 서비스 → 컨트롤러 순서로 하나씩 만든다. 각 단계마다 실행하거나 테스트해서 확인한 뒤 다음으로 넘어간다.
-- **Todo로 익히고 상품에 적용한다.** 1~2일 차에 Todo로 기본 구조를 익힌다. 3~5일 차에는 같은 구조를 상품에 적용하면서 기능을 하나씩 늘린다. 6일 차에는 지금까지 만든 API에 로그인과 권한을 입힌다.
+- **Todo로 익히고 상품에 적용한다.** 1~2일 차에 Todo로 기본 구조를 익힌다. 3~5일 차에는 같은 구조를 상품에 적용하면서 기능을 하나씩 늘린다. 6일 차에는 지금까지 만든 API에 로그인과 권한을 입히고, 7일 차에는 Redis로 Refresh Token을 관리한다.
 - **실제로 겪은 문제를 교재로 쓴다.** 각 일차의 "실전에서 만난 문제"는 이 프로젝트를 만들면서 실제로 생긴 문제다. 답을 바로 보여 주지 말고, 학생이 먼저 오류 메시지를 읽게 한다.
 
 ### 일정 한눈에 보기
@@ -27,6 +27,7 @@
 | 4일 | 파일 업로드 | Supabase Storage 연동, 상품 등록 API(이미지 포함) |
 | 5일 | 기능 완성과 테스트 | 검색, 수정, 삭제 표시, 계층별 테스트, Git 정리 |
 | 6일 | 사용자와 인증·보안 | 사용자 모델, JWT 로그인, 인증 필터, 권한, CORS |
+| 7일 | Refresh Token과 Redis | Redis 연결, Refresh Token 저장, 토큰 갱신 API, 재사용 탐지 |
 
 ## 1일 차: Spring Boot 시작과 DB 연결
 
@@ -352,8 +353,83 @@
 
 ### 최종 과제
 
-- **토큰 재발급 API 설계:** Refresh Token으로 새 Access Token을 받는 API(`POST /api/auth/refresh`)를 설계한다. 로그아웃하면 Refresh Token을 어떻게 무효로 만들지, 권한이 바뀐 사용자에게는 어떤 권한을 담을지도 적는다.
+- **토큰 재발급 API 설계:** Refresh Token으로 새 Access Token을 받는 API(`POST /api/auth/refresh`)를 설계한다. Refresh Token을 어디에 저장할지, 이미 쓴 Refresh Token이 다시 오면 어떻게 할지, 권한이 바뀐 사용자에게는 어떤 권한을 담을지 적는다. 7일 차에 이 설계와 실제 구현을 비교한다.
 - **할 일 작성자 설계:** 지금은 로그인만 하면 다른 사람의 할 일도 수정하고 삭제할 수 있다. 작성자를 저장하고, 본인과 ADMIN만 수정·삭제할 수 있게 하는 방법을 설계한다.
+
+## 7일 차: Refresh Token과 Redis
+
+### 학습 목표
+
+- Refresh Token을 서버에 저장해야 하는 이유를 설명할 수 있다.
+- Redis에 연결하고, 키·값·TTL로 데이터를 저장할 수 있다.
+- Refresh Token Rotation과 재사용 탐지를 구현할 수 있다.
+- 여러 요청이 동시에 올 때 생기는 경쟁 조건을 찾고, 원자적인 명령으로 막을 수 있다.
+- 실제로 호출해 보며 버그를 찾고 원인을 설명할 수 있다.
+
+### 시간표
+
+| 시간 | 내용 |
+|---|---|
+| 오전 1 | 6일 차 최종 과제(토큰 재발급 설계) 발표. 서버에 저장하지 않는 Refresh Token의 한계(유출돼도 막을 수 없음) |
+| 오전 2 | Redis 소개(메모리 저장소, 키·값, TTL), Redis Cloud 무료 DB 만들기, redis-cli나 Redis Insight로 `SET`, `GET`, `TTL` 해 보기 |
+| 오전 3 | `spring-boot-starter-data-redis`, `spring.data.redis.*` 설정, `RedisTemplate`과 직렬화 |
+| 오후 1 | 로그인할 때 Refresh Token 저장(`RefreshTokenRepository`), TTL을 토큰 유효 시간과 맞추기 |
+| 오후 2 | 토큰 갱신 API(`POST /api/auth/refresh`): 비교, Rotation, 불일치면 삭제, 실패하면 401 |
+| 오후 3 | 경쟁 조건: 같은 토큰으로 동시에 두 번 갱신하기. `SET ... IFEQ GET`으로 비교와 교체를 한 번에 |
+| 오후 4 | curl로 시나리오 9개 확인, 같은 초에 발급한 토큰이 같아지는 버그와 `jti` |
+
+### 핵심 개념
+
+- **Refresh Token을 서버에 저장하는 이유:** JWT는 서명만 맞으면 통과한다. 서버에 저장하지 않으면 로그아웃하거나 토큰이 유출돼도 만료될 때까지 막을 수 없다. 서버에 저장해 두면 지우는 것만으로 무효로 만들 수 있다.
+- **왜 Redis인가:** 토큰은 자주 읽고 쓰며, 시간이 지나면 지워져야 한다. Redis는 메모리에 저장해 빠르고, TTL을 주면 시간이 지난 키를 알아서 지운다. DB 테이블에 저장하면 만료된 행을 지우는 작업을 따로 만들어야 한다.
+- **저장 구조:** 키 `refresh-token:{소문자 이메일}`, 값은 토큰, TTL은 Refresh Token 유효 시간(60분). 사용자당 토큰이 하나라, 다시 로그인하면 이전 토큰을 덮어쓴다.
+- **Refresh Token Rotation:** 갱신할 때 Access Token만이 아니라 Refresh Token도 새로 준다. 쓴 Refresh Token은 다시 쓸 수 없다.
+- **재사용 탐지:** 이미 쓴 Refresh Token이 다시 왔다면 누군가 훔쳐 쓰고 있을 수 있다. 저장된 토큰을 지워서 공격자와 정상 사용자 모두 다시 로그인하게 만든다.
+- **경쟁 조건과 원자적 명령:** "꺼내서 비교하고 저장"을 두 명령으로 나누면 그 사이에 다른 요청이 끼어들 수 있다. Redis의 `SET key 새값 IFEQ 예전값 GET`은 비교와 교체를 한 명령으로 처리한다(Redis 8.4 이상).
+
+| `GET`이 돌려준 이전 값 | 의미 | 처리 |
+|---|---|---|
+| 보낸 토큰과 같음 | 교체됨 | 새 토큰 응답 |
+| 없음 | 로그아웃했거나 TTL이 지남 | 401 |
+| 보낸 토큰과 다름 | 이미 쓴 토큰 | 저장된 토큰 삭제, 401 |
+
+- **토큰마다 다른 값(`jti`):** JWT의 `iat`, `exp`는 초 단위다. 내용이 같은 토큰을 같은 초에 두 번 발급하면 서명까지 똑같다. `jti`에 UUID를 넣어 발급할 때마다 다르게 만든다.
+
+### 실습
+
+1. Redis Cloud 무료 DB를 만들고, 접속 정보를 `application-local.yaml`의 `spring.data.redis`에 넣는다.
+2. `RedisConfig`에서 키와 값을 문자열로 저장하는 `RedisTemplate`을 만든다.
+3. `RefreshTokenRepository`를 만들고, 로그인할 때 Refresh Token을 TTL과 함께 저장한다. Redis에서 `GET`, `TTL`로 확인한다.
+4. 토큰 갱신 API를 만든다. 처음에는 `GET`으로 꺼내 비교한 뒤 `SET`으로 저장하는 방식으로 만든다.
+5. 같은 토큰으로 갱신 요청 두 개를 동시에 보내(`curl ... & curl ... & wait`) 둘 다 성공할 수 있는지 생각해 본다. `SET ... IFEQ GET`으로 바꾸고 다시 확인한다.
+6. 아래 경우를 curl로 호출해 응답 코드와 Redis 상태를 표로 정리한다.
+   - 받은 Refresh Token으로 두 번 연속 갱신
+   - 이미 쓴 Refresh Token으로 갱신, 그 뒤 가장 최근 토큰으로 갱신
+   - 형식이 틀린 토큰, Access Token, 빈 값
+   - 만료된 Refresh Token (`exp`를 과거로 해 직접 서명)
+   - 같은 Refresh Token으로 동시에 두 번
+   - 로그인한 같은 초에 갱신하고 이전 토큰 재사용
+
+### 실전에서 만난 문제
+
+- **redis-cli에서 값이 깨져 보인다:** 기본 `RedisTemplate`은 JDK 직렬화를 써서 키 앞에 `\xac\xed\x00...`이 붙는다. `StringRedisSerializer`로 바꿨다.
+- **`RedisTemplate<String, String>` 빈이 두 개:** Spring Boot가 만드는 `StringRedisTemplate`도 같은 타입이다. 파라미터 이름이 우연히 맞아 동작했지만, 그 방식은 쉽게 깨진다. `@Qualifier`로 지정했다.
+- **꺼내서 비교하고 저장하면 동시 요청이 둘 다 통과한다:** 처음 만든 코드는 `GET`과 `SET`을 따로 실행했다. 같은 토큰으로 요청 두 개가 거의 동시에 오면 둘 다 비교를 통과한다. 처음에는 Lua 스크립트를 생각했지만, 서버 버전(Redis 8.6)을 확인해 보니 `SET`의 `IFEQ` 옵션 하나로 해결할 수 있었다. 도구가 이미 제공하는 기능부터 찾아보는 사례다.
+- **같은 초에 발급하면 이전 토큰이 다시 통과한다:** 실제 호출 시나리오를 돌리다가 찾은 버그다. 로그인한 같은 초에 갱신하면 새 Refresh Token이 이전 토큰과 똑같았다. 그래서 교체해도 이전 토큰이 통과했다. `iat`를 밀리초로 바꾸는 방법도 검토했지만, `iat`는 표준상 초 단위이고 시간에 기대는 방식은 확실하지 않아 `jti`(UUID)를 넣었다. 단위 테스트로는 찾기 어렵고, 실제로 호출해 봐야 드러나는 문제였다.
+
+### 체크포인트
+
+- [ ] 로그인하면 Redis에 `refresh-token:{이메일}` 키가 생기고, TTL이 3600초 근처다.
+- [ ] 받은 Refresh Token으로 갱신하면 200이고, Redis 값이 새 Refresh Token으로 바뀐다.
+- [ ] 이미 쓴 Refresh Token으로 갱신하면 401이고, Redis 키가 지워진다.
+- [ ] 만료된 Refresh Token으로 갱신하면 401 "다시 로그인해 주세요"이다.
+- [ ] 같은 토큰으로 동시에 두 번 갱신하면 하나만 200이다.
+- [ ] Redis 비밀번호가 git에 없다.
+
+### 최종 과제
+
+- **로그아웃 API 설계:** Redis의 Refresh Token을 지우는 로그아웃 API를 설계한다. 이미 발급한 Access Token은 만료(10분)될 때까지 쓸 수 있는데, 이것도 막아야 할지, 막는다면 `jti`를 어떻게 쓸지 적는다.
+- **여러 기기 로그인 설계:** 지금은 사용자당 Refresh Token이 하나라, 다른 기기에서 로그인하면 먼저 로그인한 기기는 갱신할 수 없다. 기기마다 로그인을 유지하려면 키를 어떻게 바꿔야 하는지, 재사용을 탐지하면 어느 범위까지 지울지 설계한다.
 
 ## 부록
 
@@ -362,7 +438,7 @@
 | 항목 | 내용 |
 |---|---|
 | 개발 도구 | JDK 21, IntelliJ IDEA 또는 VS Code, Git |
-| 계정 | GitHub, Supabase(무료 요금제) |
+| 계정 | GitHub, Supabase(무료 요금제), Redis Cloud(무료 요금제) |
 | API 호출 도구 | curl 또는 Postman |
 | 사전 학습 | Java 클래스·인터페이스·컬렉션, SQL SELECT·INSERT·JOIN, HTTP 요청과 응답의 기본 구조 |
 
@@ -371,14 +447,15 @@
 | 항목 | 비중 | 기준 |
 |---|---|---|
 | 일일 체크포인트 | 40% | 각 일차 체크포인트 달성 여부 |
-| 최종 결과물 | 30% | 상품 API 5개 동작, 로그인과 권한 동작, 오류 응답 형식 통일, 비밀 정보 미포함 |
+| 최종 결과물 | 30% | 상품 API 5개 동작, 로그인과 권한 동작, 토큰 갱신과 재사용 탐지 동작, 오류 응답 형식 통일, 비밀 정보 미포함 |
 | 테스트 | 20% | 계층별 테스트 작성, 전체 통과 |
 | 과제와 회고 | 10% | 설계 비교 과제, 최종 과제 |
 
 ### 강의 팁
 
 - **오류 메시지를 먼저 읽게 한다:** "실전에서 만난 문제"는 일부러 같은 오류를 재현해 보여 준다. 학생이 먼저 오류 메시지를 읽고 원인을 추측하게 한다.
-- **심화 내용은 선택이다:** 비관적 잠금, pg_trgm, 로그인 응답 시간 맞추기는 시간이 부족하면 개념만 설명하고 넘어가도 된다.
+- **심화 내용은 선택이다:** 비관적 잠금, pg_trgm, 로그인 응답 시간 맞추기, 토큰 비교 시간 맞추기(`MessageDigest.isEqual`)는 시간이 부족하면 개념만 설명하고 넘어가도 된다.
 - **6일 차는 양이 많다:** 내용이 가장 많은 날이다. 사용자 엔티티(오전 2)를 미리 만들어 두고 시작하거나, CORS(오후 4)를 과제로 돌려도 된다.
 - **실제 DB를 쓰는 테스트에 주의한다:** 학생마다 Supabase 프로젝트를 따로 쓰게 한다. 무료 요금제의 커넥션 수가 적으므로 커넥션 풀 크기를 작게 둔다.
+- **Redis 버전을 확인한다:** 7일 차의 `SET ... IFEQ`는 Redis 8.4 이상에서만 동작한다. Redis Cloud 무료 DB는 최신 버전이지만, 로컬에 Docker로 띄운다면 `redis:8.4` 이상 이미지를 쓴다.
 - **참고 코드:** 이 저장소(demo1)의 `main` 브랜치와 [docs/product.md](product.md), [docs/auth.md](auth.md)를 보면 된다.
