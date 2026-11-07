@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.demo1.support.AuthenticationPrincipalTestConfig;
 import com.example.demo1.todo.dto.TodoCreateRequest;
 import com.example.demo1.todo.dto.TodoPageRequest;
 import com.example.demo1.todo.dto.TodoPageResponse;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,9 +36,11 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * 웹 계층만 실행한다. TodoService는 가짜 객체라 DB에 접속하지 않는다.
  * 보안 필터(JWT 인증)는 끄고 컨트롤러 동작만 검증한다.
+ * {@link AuthenticationPrincipalTestConfig}가 없으면 @AuthenticationPrincipal 파라미터가 있는 등록 요청이 실패한다.
  */
 @WebMvcTest(TodoController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(AuthenticationPrincipalTestConfig.class)
 class TodoControllerTest {
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 5, 12, 0);
