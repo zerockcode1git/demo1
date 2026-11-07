@@ -3,6 +3,8 @@ package com.example.demo1.product.repository;
 import com.example.demo1.product.dto.ProductListResponse;
 import com.example.demo1.product.entity.Product;
 import jakarta.persistence.LockModeType;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +30,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id")
     Optional<Product> findByIdForUpdate(@Param("id") Long id);
+
+    /**
+     * 여러 상품을 id 순서로 비관적 쓰기 잠금한다. 주문할 때와 주문을 취소할 때 쓴다.
+     * <p>
+     * 두 트랜잭션이 같은 상품들을 서로 다른 순서로 잠그면 서로를 기다리는 교착 상태(deadlock)가 생긴다.
+     * 항상 id 순서로 잠가서 이를 막는다. 삭제된 상품은 @SQLRestriction 때문에 결과에서 빠진다.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Product p where p.id in :ids order by p.id")
+    List<Product> findAllByIdInForUpdate(@Param("ids") Collection<Long> ids);
 
     /**
      * 상품명이 패턴과 일치하는 상품 목록을 0번 이미지 하나와 함께 조회한다. 이미지가 없는 상품도 포함된다.
