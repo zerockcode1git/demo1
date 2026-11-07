@@ -451,6 +451,7 @@ Swagger UI 오른쪽 위 Authorize 버튼에 Access Token을 넣으면 모든 �
 ## 테스트
 
 - **보안 필터를 끈 컨트롤러 테스트:** 보안 스타터를 추가하면 `@WebMvcTest`에 Spring Boot 기본 보안(모든 요청 로그인 필요)이 적용된다. 그래서 `TodoControllerTest`와 `ProductControllerTest`에 `@AutoConfigureMockMvc(addFilters = false)`를 붙였다.
+- **`@AuthenticationPrincipal` 리졸버:** `@WebMvcTest`에는 이 파라미터를 처리하는 리졸버가 없어, `TokenPayload`를 요청 파라미터로 만들다 NPE가 난다. `TodoControllerTest`와 `OrderControllerTest`는 `support/AuthenticationPrincipalTestConfig`를 `@Import`해 리졸버를 등록한다. 인증 정보가 없으니 컨트롤러에는 `null`이 넘어간다.
 - **`@PreAuthorize` 미검증:** `@WebMvcTest`는 `SecurityConfig`를 읽지 않아서, 위 컨트롤러 테스트에는 `@PreAuthorize`도 적용되지 않는다. 권한 규칙은 이 테스트들로 검증되지 않는다.
 - **테스트가 없는 부분:** 사용자, 로그인, 토큰 갱신, Redis 저장, JWT, 필터, CORS에 대한 자동 테스트는 아직 없다. 위 표는 앱을 실행해서 직접 호출한 결과다.
 

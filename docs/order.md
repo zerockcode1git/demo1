@@ -284,7 +284,20 @@ PostgreSQL에서 Hibernate는 `PESSIMISTIC_WRITE`를 `FOR UPDATE`보다 약한 `
 
 ## 테스트
 
-자동 테스트는 아직 없다. 앱을 실행해 `user1@example.com`, `admin@example.com`으로 직접 호출하고 SQL 로그를 확인했다. 테스트용 상품을 새로 만들어 쓰고 끝나면 삭제했다.
+| 테스트 | 방식 | 개수 | 확인하는 것 |
+|---|---|---|---|
+| `OrderTest` | 엔티티만, DB 없음 | 14 | 총액·상품 수 계산, `int` 넘침, 수량 검증, 상태 전이(완료, 취소, 두 번 취소) |
+| `OrderServiceTest` | `@DataJpaTest`, 실제 DB, 끝나면 롤백 | 25 | 재고 차감·복원, 재고 부족 시 전체 실패, 수량 합치기, 주문 당시 가격, 삭제된 상품, 권한, **목록 쿼리 수** |
+| `OrderControllerTest` | `@WebMvcTest`, 서비스는 가짜 객체 | 16 | 상태 코드, 검증 메시지, `shortages` 응답, `/all`과 `/{id}` 구분, `orderId` 비노출 |
+
+- **쿼리 수 검증:** `hibernate.generate_statistics`를 켜고 실행된 SQL 수(`getPrepareStatementCount`)를 센다. 페이지 크기 2와 5 모두 3번이다. 주문이 없으면 1번이다(Spring Data가 count를 생략하고, 주문 상품 조회도 건너뜀).
+- **주문자 분리:** 실제 DB에 다른 주문이 있으므로 테스트마다 주문자 이메일을 UUID로 만든다.
+- **`@AuthenticationPrincipal`:** `@WebMvcTest`에는 이 파라미터를 처리하는 리졸버가 없어, Spring MVC가 `TokenPayload`를 요청 파라미터로 보고 만들다 NPE가 난다. `support/AuthenticationPrincipalTestConfig`로 리졸버를 등록한다. `TodoControllerTest`도 같은 이유로 실패하고 있어 함께 적용했다.
+- **자동 테스트로 확인하지 않는 것:** 테스트가 트랜잭션 하나로 실행되어 동시 주문, 교착 상태 방지, 동시 취소의 잠금 대기는 재현되지 않는다. 컨트롤러 테스트는 보안 필터를 꺼서 401·403과 `@PreAuthorize`도 검증하지 않는다. 이 부분은 아래처럼 직접 호출해 확인했다.
+
+### 실제 호출로 확인한 것
+
+앱을 실행해 `user1@example.com`, `admin@example.com`으로 직접 호출하고 SQL 로그를 확인했다. 테스트용 상품을 새로 만들어 쓰고 끝나면 삭제했다.
 
 | 확인 항목 | 결과 |
 |---|---|
@@ -304,7 +317,7 @@ PostgreSQL에서 Hibernate는 `PESSIMISTIC_WRITE`를 `FOR UPDATE`보다 약한 `
 
 ## 알려진 제한
 
-- **자동 테스트 없음:** 위 결과는 직접 호출한 것이다. 동시 주문과 교착 상태 방지는 자동으로 검증되지 않는다.
+- **동시성 자동 테스트 없음:** 동시 주문, 교착 상태 방지, 동시 취소는 직접 호출로만 확인했다.
 - **결제 없음:** 재고 차감에 성공하면 바로 완료다. 결제를 붙이면 결제 전까지 `PENDING`으로 두고, 결제하지 않은 주문의 재고를 되돌리는 처리가 필요하다.
 - **잠금 대기 응답:** 잠금을 3초 안에 얻지 못하면 나는 예외를 따로 처리하지 않는다. 스프링 기본 오류(500)로 응답한다.
 - **삭제된 상품 재고:** 취소할 때 삭제된 상품의 재고는 되돌리지 않는다. 나중에 상품을 복구하는 기능이 생기면 재고가 맞지 않는다.
