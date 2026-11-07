@@ -1,6 +1,7 @@
 package com.example.demo1.auth.controller;
 
 import com.example.demo1.auth.dto.LoginRequest;
+import com.example.demo1.auth.dto.RefreshRequest;
 import com.example.demo1.auth.service.AuthService;
 import com.example.demo1.security.jwt.dto.TokenPairResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,5 +31,15 @@ public class AuthController {
     @PostMapping("/login")
     public TokenPairResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @Operation(
+            summary = "토큰 갱신",
+            description = "Access Token이 만료되면 Refresh Token을 보내 Access Token과 Refresh Token을 모두 새로 받는다. "
+                    + "보낸 Refresh Token은 더 이상 쓸 수 없으므로 응답의 새 Refresh Token으로 바꿔 저장한다. "
+                    + "Refresh Token이 만료됐거나 저장된 값과 다르면 401을 응답하며, 이때는 다시 로그인해야 한다.")
+    @PostMapping("/refresh")
+    public TokenPairResponse refresh(@Valid @RequestBody RefreshRequest request) {
+        return authService.refresh(request);
     }
 }

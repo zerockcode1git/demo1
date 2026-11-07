@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
  *   "sub": "Hong@Example.com",      // 이메일
  *   "nickname": "홍길동",
  *   "roles": ["ROLE_USER", "ROLE_ADMIN"],
+ *   "jti": "3f2b8c1e-...",          // 토큰 ID. 발급할 때마다 다른 UUID
  *   "type": "access",               // access 또는 refresh
  *   "iat": 1762500000,              // 발급 시각
  *   "exp": 1762500600               // 만료 시각
@@ -108,6 +110,9 @@ public class JwtProvider {
     private String create(TokenPayload payload, TokenType type, Instant now) {
         Duration validity = type == TokenType.ACCESS ? accessTokenValidity : refreshTokenValidity;
         return Jwts.builder()
+                // 토큰 ID. iat가 초 단위라 같은 초에 같은 사용자에게 발급하면 토큰이 똑같아진다.
+                // 그러면 Refresh Token을 교체해도 값이 같아 이전 토큰이 계속 통과하므로, 발급마다 다른 값을 넣는다.
+                .id(UUID.randomUUID().toString())
                 .subject(payload.email())
                 .claim(NICKNAME, payload.nickname())
                 .claim(ROLES, payload.roles().stream().map(Enum::name).toList())

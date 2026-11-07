@@ -2,6 +2,7 @@ package com.example.demo1.auth.controller;
 
 import com.example.demo1.auth.dto.AuthErrorResponse;
 import com.example.demo1.auth.exception.LoginFailedException;
+import com.example.demo1.auth.exception.TokenRefreshFailedException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,12 @@ public class AuthControllerAdvice {
     @ExceptionHandler(LoginFailedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public AuthErrorResponse handleLoginFailed(LoginFailedException exception) {
+        return new AuthErrorResponse(HttpStatus.UNAUTHORIZED.value(), exception.getMessage());
+    }
+
+    @ExceptionHandler(TokenRefreshFailedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public AuthErrorResponse handleTokenRefreshFailed(TokenRefreshFailedException exception) {
         return new AuthErrorResponse(HttpStatus.UNAUTHORIZED.value(), exception.getMessage());
     }
 
