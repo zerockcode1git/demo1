@@ -307,6 +307,8 @@ URL 규칙은 이 두 가지만 둔다. 기능별 권한은 컨트롤러 메서�
 | 할 일 등록, 수정, 삭제 | X (401) | O | `TodoController`의 `@PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")` |
 | 상품 목록, 조회 | O | O | 화이트 리스트 |
 | 상품 등록, 수정, 삭제 | X (401) | O | 화이트 리스트 밖 (`authenticated`) |
+| 주문, 내 주문 목록, 주문 상세, 주문 취소 | X (401) | O (상세·취소는 본인 또는 ADMIN) | `OrderController`의 `@PreAuthorize`, 서비스에서 본인 확인 ([order.md](order.md)) |
+| 전체 주문 목록 | X (401) | ADMIN만 (그 외 403) | `@PreAuthorize("hasRole('ADMIN')")` |
 | 로그인, 토큰 갱신 | O | O | 화이트 리스트 |
 
 할 일을 등록하면 로그인 사용자의 이메일이 로그에 남는다(`Todo 등록 요청. email=...`). 작성자를 DB에 저장하지는 않는다.
